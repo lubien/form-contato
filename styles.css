@@ -133,6 +133,34 @@ button[type="submit"]:disabled {
     display: none;
 }
 
+footer {
+    color: #784da6;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-links a {
+    color: #784da6;
+    text-decoration: none;
+    margin: 0 10px;
+    padding: 5px;
+    display: inline-block;
+}
+
+.footer-links a:hover {
+    color: #9278ae;
+}
+
+.footer-content p {
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
 @media (max-width: 768px) {
     main {
         padding: 30px 20px;
