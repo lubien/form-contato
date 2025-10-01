@@ -1,126 +1,159 @@
 // Script para Formulário de Contato
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('contact-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const successMessage = document.getElementById('success-message');
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('contact-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const successMessage = document.getElementById('success-message');
+  const notificationContainer = document.getElementById('notification-container');
 
-    // Validação de email
-    function isValidEmail(email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
+  // Validação de email
+  function isValidEmail(email) {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return emailRegex.test(email);
+  }
+
+  // Validação de telefone (formato brasileiro)
+  function isValidPhone(phone) {
+    if (!phone) return true;
+    const cleanedPhone = phone.replace(/\D/g, '');
+    return cleanedPhone.length >= 8 && cleanedPhone.length <= 11;
+  }
+
+  // Validação do nome (mínimo de 3 letras)
+  function isValidName(name) {
+    const nameRegex = /^[a-zA-ZÀ-ÿ\s]{3,}$/;
+    return nameRegex.test(name.trim());
+  }
+
+  // Limpar erro
+  function clearError(field) {
+    const errorElement = document.getElementById(`${field.id}-error`);
+    field.classList.remove('error');
+    if (errorElement) {
+      errorElement.textContent = '';
+    }
+  }
+
+  // Mostrar erro
+  function showError(field, message) {
+    const errorElement = document.getElementById(`${field.id}-error`);
+    field.classList.add('error');
+    if (errorElement) {
+      errorElement.textContent = message;
+    }
+  }
+
+  // Validar campo
+  function validateField(field) {
+    clearError(field);
+    let isValid = true;
+    const value = field.value.trim();
+
+    if (field.hasAttribute('required') && !value) {
+      showError(field, 'Este campo é obrigatório.');
+      isValid = false;
+    } else if (field.id === 'name') {
+      if (!isValidName(value)) {
+        showError(field, 'Digite um nome válido (apenas letras, min. 3 caracteres).');
+        isValid = false;
+      }
+    } else if (field.type === 'email' && value) {
+      if (!isValidEmail(value)) {
+        showError(field, 'O formato do e-mail é inválido.');
+        isValid = false;
+      }
+    } else if (field.type === 'tel' && value) {
+      if (!isValidPhone(value)) {
+        showError(field, 'O telefone deve ter 8 a 11 dígitos.');
+        isValid = false;
+      }
+    } else if (field.id === 'subject' && value.length < 5) {
+      showError(field, 'O assunto deve ter pelo menos 5 caracteres.');
+      isValid = false;
+    } else if (field.id === 'message' && value.length < 15) {
+      showError(field, 'A mensagem deve ter pelo menos 15 caracteres.');
+      isValid = false;
     }
 
-    // Validação de telefone (formato brasileiro)
-    function isValidPhone(phone) {
-        if (!phone) return true; // Campo opcional
-        const phoneRegex = /^[\d\s\(\)\-\+]{10,}$/;
-        return phoneRegex.test(phone);
-    }
+    return isValid;
+  }
 
-    // Limpar erro
-    function clearError(field) {
-        const errorElement = document.getElementById(`${field.id}-error`);
-        field.classList.remove('error');
-        if (errorElement) {
-            errorElement.textContent = '';
-        }
-    }
+  function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
 
-    // Mostrar erro
-    function showError(field, message) {
-        const errorElement = document.getElementById(`${field.id}-error`);
-        field.classList.add('error');
-        if (errorElement) {
-            errorElement.textContent = message;
-        }
-    }
+    notificationContainer.appendChild(toast);
+    void toast.offsetWidth;
+    toast.classList.add('show');
 
-    // Validar campo
-    function validateField(field) {
-        clearError(field);
-        let isValid = true;
+    setTimeout(() => {
+      toast.classList.remove('show');
+      toast.addEventListener('transitionend', () => {
+        toast.remove();
+      });
+    }, 3000);
+  }
 
-        if (field.hasAttribute('required') && !field.value.trim()) {
-            showError(field, 'Este campo é obrigatório');
-            isValid = false;
-        } else if (field.type === 'email' && field.value && !isValidEmail(field.value)) {
-            showError(field, 'Digite um e-mail válido');
-            isValid = false;
-        } else if (field.type === 'tel' && field.value && !isValidPhone(field.value)) {
-            showError(field, 'Digite um telefone válido');
-            isValid = false;
-        } else if (field.id === 'name' && field.value.trim().length < 3) {
-            showError(field, 'O nome deve ter pelo menos 3 caracteres');
-            isValid = false;
-        } else if (field.id === 'message' && field.value.trim().length < 10) {
-            showError(field, 'A mensagem deve ter pelo menos 10 caracteres');
-            isValid = false;
-        }
+  // Adicionar validação em tempo real
+  const fields = form.querySelectorAll('input, textarea');
+  fields.forEach(field => {
+    field.addEventListener('blur', function () {
+      validateField(this);
+    });
 
-        return isValid;
-    }
+    field.addEventListener('input', function () {
+      if (this.classList.contains('error')) {
+        // Valida o campo enquanto o usuário digita SE já estiver com erro
+        validateField(this);
+      }
+    });
+  });
 
-    // Adicionar validação em tempo real
-    const fields = form.querySelectorAll('input, textarea');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    let isFormValid = true;
     fields.forEach(field => {
-        field.addEventListener('blur', function() {
-            validateField(this);
-        });
-
-        field.addEventListener('input', function() {
-            if (this.classList.contains('error')) {
-                validateField(this);
-            }
-        });
+      if (!validateField(field)) {
+        isFormValid = false;
+      }
     });
 
-    // Manipular envio do formulário
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
+    if (!isFormValid) {
+      showToast('❌ Por favor, preencha os campos obrigatórios corretamente.', 'error');
+      return;
+    }
 
-        // Validar todos os campos
-        let isFormValid = true;
-        fields.forEach(field => {
-            if (!validateField(field)) {
-                isFormValid = false;
-            }
-        });
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
 
-        if (!isFormValid) {
-            return;
-        }
+    const formData = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      subject: document.getElementById('subject').value,
+      message: document.getElementById('message').value
+    };
 
-        // Desabilitar botão durante o envio
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Enviando...';
+    setTimeout(() => {
+      console.log('Dados do formulário:', formData);
 
-        // Coletar dados do formulário
-        const formData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            phone: document.getElementById('phone').value,
-            subject: document.getElementById('subject').value,
-            message: document.getElementById('message').value
-        };
+      showToast('✅ Mensagem enviada com sucesso!', 'success');
 
-        // Simular envio (aqui você pode adicionar uma requisição real para um backend)
-        setTimeout(() => {
-            console.log('Dados do formulário:', formData);
+      form.classList.add('hidden');
+      successMessage.classList.remove('hidden');
 
-            // Esconder formulário e mostrar mensagem de sucesso
-            form.classList.add('hidden');
-            successMessage.classList.remove('hidden');
+      setTimeout(() => {
+        form.reset();
+        fields.forEach(clearError);
 
-            // Reset do formulário após 3 segundos
-            setTimeout(() => {
-                form.reset();
-                form.classList.remove('hidden');
-                successMessage.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Enviar';
-            }, 3000);
-        }, 1000);
-    });
+        form.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar';
+      }, 3000);
+    }, 1000);
+  });
 });
