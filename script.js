@@ -1,5 +1,6 @@
 // Script para Formulário de Contato
 
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contact-form');
     const submitBtn = document.getElementById('submit-btn');
